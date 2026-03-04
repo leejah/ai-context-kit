@@ -20,28 +20,35 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/ofershap/ai-context-kit/stargazers"><img src="https://img.shields.io/github/stars/ofershap/ai-context-kit?style=social" alt="GitHub stars" /></a>
+  &nbsp;
   <a href="https://www.npmjs.com/package/ai-context-kit"><img src="https://img.shields.io/npm/v/ai-context-kit.svg" alt="npm version" /></a>
   <a href="https://www.npmjs.com/package/ai-context-kit"><img src="https://img.shields.io/npm/dm/ai-context-kit.svg" alt="npm downloads" /></a>
   <a href="https://github.com/ofershap/ai-context-kit/actions/workflows/ci.yml"><img src="https://github.com/ofershap/ai-context-kit/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
   <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-strict-blue" alt="TypeScript" /></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT" /></a>
   <a href="https://img.shields.io/badge/dependencies-0-brightgreen"><img src="https://img.shields.io/badge/dependencies-0-brightgreen" alt="zero dependencies" /></a>
+  <a href="https://makeapullrequest.com"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs Welcome" /></a>
 </p>
 
 ---
 
-You write a CLAUDE.md. Then someone adds `.cursor/rules/`. Then a teammate drops in an AGENTS.md. Then someone copies in a `.cursorrules` file from a blog post. Nobody removes the old ones.
+## The Problem I Kept Running Into
 
-Six months later your project has four context files that overlap, contradict each other, and dump 8,000 tokens of directory listings and "follow best practices" into every conversation. Your agent follows all of it. It gets slower. It gets confused. You blame the model.
+I have 30+ repos. Each one accumulated context files over time - a CLAUDE.md here, some `.cursor/rules/` there, an AGENTS.md someone copied from a blog post. Nobody cleaned up the old ones.
 
-An [ETH Zurich study](https://www.sri.inf.ethz.ch/publications/gloaguen2026agentsmd) (February 2026) measured what actually happens when you give agents context files:
+One day I ran the numbers. A single project was injecting 8,000 tokens of context into every conversation. Half of it was directory listings. Two files contradicted each other on semicolons. A third one just said "follow best practices."
 
-- Auto-generated context files **reduced** task success compared to providing nothing
-- Human-written ones only improved accuracy by **4%**
-- Inference costs jumped **20%+** from wasted tokens
-- Performance dropped on some models because agents got **too obedient** - following unnecessary instructions instead of solving the actual problem
+My agent was slower, more expensive, and made worse decisions. I blamed Claude. Turns out I was poisoning it.
 
-The fix isn't better writing. It's treating context like a budget - measure it, trim it, inject only what the current task needs.
+An [ETH Zurich study](https://www.sri.inf.ethz.ch/publications/gloaguen2026agentsmd) from February 2026 confirmed what I was seeing:
+
+- Auto-generated context files **reduced** task success vs. providing nothing
+- Human-written ones helped by only **4%**
+- Inference costs went up **20%+** from wasted tokens
+- Some models got **too obedient** - following pointless instructions instead of solving the actual problem
+
+So I built `ai-context-kit` to treat context like a budget. Measure it, find the waste, inject only what the current task actually needs.
 
 ```typescript
 import { loadRules, measure, lint, select } from "ai-context-kit";
@@ -109,6 +116,19 @@ ai-context-kit lint - 6 rule file(s)
 ```
 
 That's the difference between guessing and knowing.
+
+---
+
+## What's Different
+
+| | Other approaches | ai-context-kit |
+|---|---|---|
+| Context cost | Nobody measures it | Token count per file with budget check |
+| Conflicts | You find out when the agent does something weird | Detects contradictions across all files automatically |
+| Duplicates | Same rule in 3 files, 3x the tokens | Flagged and scored |
+| Task relevance | Every rule injected every time | `select()` picks only what matters for the current task |
+| Multi-tool | Locked to one IDE's format | Works across Cursor, Claude Code, Copilot, Windsurf, Cline |
+| CI | Hope for the best | `lint` exits with code 1 on errors. Drop it in your pipeline |
 
 ---
 
@@ -236,7 +256,7 @@ All commands support `--path <dir>` to point at a different project root. `lint`
 
 ## Use with Vercel AI SDK / LangChain / Custom Agents
 
-This isn't just for Cursor. If you're building agents with Vercel AI SDK, LangChain, or your own framework, ai-context-kit solves the same problem: how much context are you stuffing into the system prompt, and is it helping or hurting?
+This isn't just for Cursor. If you're building agents with Vercel AI SDK, LangChain, or your own framework - the same problem exists: how much context are you stuffing into the system prompt, and is it helping or hurting?
 
 ```typescript
 import { loadRules, select } from "ai-context-kit";
@@ -278,6 +298,20 @@ ai-context-kit detects the format from the file path. No configuration needed.
 
 ---
 
+## Roadmap
+
+- [ ] Semantic duplicate detection (not just exact matches)
+- [ ] `watch` mode - re-lint on file changes
+- [ ] Config file support (`.contextkitrc`)
+- [ ] MCP server - expose lint/measure as tools your agent can call on itself
+- [ ] VS Code / Cursor extension with inline token counts
+- [ ] Rule effectiveness scoring based on agent outcomes
+- [ ] Community rule templates (share what works)
+
+Have an idea? [Open a discussion](https://github.com/ofershap/ai-context-kit/discussions).
+
+---
+
 <details>
 <summary><strong>Why not just write better rules?</strong></summary>
 
@@ -288,7 +322,7 @@ The ETH Zurich study tested both human-written and LLM-generated context files. 
 <details>
 <summary><strong>How accurate is the token estimation?</strong></summary>
 
-ai-context-kit uses a 4-character-per-token approximation. This is intentionally simple and fast. It's accurate enough for budgeting and comparison (GPT-4 averages ~4 chars/token for English text). If you need exact counts, pipe the output through tiktoken or your model's tokenizer.
+ai-context-kit uses a 4-character-per-token approximation. Intentionally simple and fast. Accurate enough for budgeting and comparison (GPT-4 averages ~4 chars/token for English text). If you need exact counts, pipe the output through tiktoken or your model's tokenizer.
 
 </details>
 
@@ -305,6 +339,12 @@ Yes. `npx ai-context-kit lint` returns exit code 1 on errors, 0 on pass. Add it 
 
 ---
 
+## Contributing
+
+PRs welcome. Whether it's a new lint rule, a format detector, or a bug fix - check out the [contributing guide](CONTRIBUTING.md).
+
+---
+
 ## Author
 
 [![Made by ofershap](https://gitshow.dev/api/card/ofershap)](https://gitshow.dev/ofershap)
@@ -315,3 +355,9 @@ Yes. `npx ai-context-kit lint` returns exit code 1 on errors, 0 on pass. Add it 
 ## License
 
 [MIT](LICENSE) &copy; [Ofer Shapira](https://github.com/ofershap)
+
+---
+
+<p align="center">
+  <a href="https://github.com/ofershap/ai-context-kit">Star this repo</a> · <a href="https://github.com/ofershap/ai-context-kit/fork">Fork it</a> · <a href="https://github.com/ofershap/ai-context-kit/issues">Report a bug</a> · <a href="https://github.com/ofershap/ai-context-kit/discussions">Join the discussion</a>
+</p>
