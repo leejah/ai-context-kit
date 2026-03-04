@@ -14,11 +14,11 @@
 </p>
 
 <p align="center">
-  <a href="#quick-start"><img src="https://img.shields.io/badge/Try_It_Now-4ade80?style=for-the-badge&logoColor=white" alt="Try It Now" /></a>
+  <a href="#quick-start"><img src="https://img.shields.io/badge/Try_It_Now-22c55e?style=for-the-badge&logoColor=white" alt="Try It Now" /></a>
   &nbsp;
-  <a href="#quick-start"><img src="https://img.shields.io/badge/Install-grey?style=for-the-badge" alt="Install" /></a>
+  <a href="#quick-start"><img src="https://img.shields.io/badge/Install-3b82f6?style=for-the-badge&logoColor=white" alt="Install" /></a>
   &nbsp;
-  <a href="#quick-start"><img src="https://img.shields.io/badge/See_Example_Output-grey?style=for-the-badge" alt="See Example Output" /></a>
+  <a href="#quick-start"><img src="https://img.shields.io/badge/See_Example_Output-8b5cf6?style=for-the-badge&logoColor=white" alt="See Example Output" /></a>
 </p>
 
 <p align="center">
@@ -295,20 +295,6 @@ ai-context-kit detects the format from the file path. No configuration needed.
 
 ---
 
-## Roadmap
-
-- [ ] Semantic duplicate detection (not just exact matches)
-- [ ] `watch` mode - re-lint on file changes
-- [ ] Config file support (`.contextkitrc`)
-- [ ] MCP server - expose lint/measure as tools your agent can call on itself
-- [ ] VS Code / Cursor extension with inline token counts
-- [ ] Rule effectiveness scoring based on agent outcomes
-- [ ] Community rule templates (share what works)
-
-Have an idea? [Open a discussion](https://github.com/ofershap/ai-context-kit/discussions).
-
----
-
 <details>
 <summary><strong>Why not just write better rules?</strong></summary>
 
@@ -332,7 +318,14 @@ Yes. `npx ai-context-kit lint` returns exit code 1 on errors, 0 on pass. Add it 
 
 ---
 
-**Stack:** TypeScript (strict) · Vitest · tsup (ESM + CJS) · zero runtime dependencies
+## Tech Stack
+
+| Component    | Technology                                                                                                                                           |
+| ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Language     | [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)](https://github.com/microsoft/TypeScript) strict mode |
+| Testing      | [![Vitest](https://img.shields.io/badge/Vitest-6E9F18?logo=vitest&logoColor=white)](https://github.com/vitest-dev/vitest)                            |
+| Bundler      | [![tsup](https://img.shields.io/badge/tsup-000?logo=esbuild&logoColor=white)](https://github.com/egoist/tsup) ESM + CJS                              |
+| Dependencies | Zero runtime dependencies                                                                                                                            |
 
 ---
 
