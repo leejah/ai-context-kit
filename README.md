@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  You spent hours writing the perfect AGENTS.md. Your agent got <em>worse</em>.<br>
+  You spent hours writing the perfect .md context file, just to find out that your agent got <em>worse</em>.<br>
   That's not a bug. That's what happens when nobody measures the cost of context.
 </p>
 
