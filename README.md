@@ -1,13 +1,12 @@
 <h1 align="center">contextkit</h1>
 
 <p align="center">
-  <strong>Your AI agent is drowning in context it doesn't need.</strong>
+  <strong>How do you measure your context?</strong>
 </p>
 
 <p align="center">
-  An ETH Zurich study found that AGENTS.md files <em>reduce</em> agent accuracy and increase costs by 20%.<br>
-  contextkit loads your rules from any format, measures their token cost,<br>
-  finds conflicts, and picks only what's relevant for the task at hand.
+  You spent hours writing the perfect AGENTS.md. Your agent got <em>worse</em>.<br>
+  That's not a bug. That's what happens when nobody measures the cost of context.
 </p>
 
 <p align="center">
@@ -16,6 +15,8 @@
   <a href="#api"><img src="https://img.shields.io/badge/API-grey?style=for-the-badge" alt="API" /></a>
   &nbsp;
   <a href="#cli"><img src="https://img.shields.io/badge/CLI-grey?style=for-the-badge" alt="CLI" /></a>
+  &nbsp;
+  <a href="#use-with-vercel-ai-sdk--langchain--custom-agents"><img src="https://img.shields.io/badge/Vercel_AI_SDK-grey?style=for-the-badge" alt="Vercel AI SDK" /></a>
 </p>
 
 <p align="center">
@@ -24,33 +25,36 @@
   <a href="https://github.com/ofershap/contextkit/actions/workflows/ci.yml"><img src="https://github.com/ofershap/contextkit/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
   <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-strict-blue" alt="TypeScript" /></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT" /></a>
+  <a href="https://img.shields.io/badge/dependencies-0-brightgreen"><img src="https://img.shields.io/badge/dependencies-0-brightgreen" alt="zero dependencies" /></a>
 </p>
 
 ---
 
-## Context Is the New Bottleneck
+You write a CLAUDE.md. Then someone adds `.cursor/rules/`. Then a teammate drops in an AGENTS.md. Then someone copies in a `.cursorrules` file from a blog post. Nobody removes the old ones.
 
-You have CLAUDE.md, `.cursor/rules/`, AGENTS.md, `.github/copilot-instructions.md`, and maybe `.windsurfrules` too. They overlap. They contradict each other. They grow until they eat half your context window with directory listings and "follow best practices."
+Six months later your project has four context files that overlap, contradict each other, and dump 8,000 tokens of directory listings and "follow best practices" into every conversation. Your agent follows all of it. It gets slower. It gets confused. You blame the model.
 
-Research from ETH Zurich (February 2026) measured what actually happens:
+An [ETH Zurich study](https://www.sri.inf.ethz.ch/publications/gloaguen2026agentsmd) (February 2026) measured what actually happens when you give agents context files:
 
-- Auto-generated context files **reduced** task success rates compared to providing nothing
-- Human-written ones improved accuracy by only 4%
-- Inference costs jumped 20%+ from wasted tokens
-- Agents followed unnecessary instructions and got confused
+- Auto-generated context files **reduced** task success compared to providing nothing
+- Human-written ones only improved accuracy by **4%**
+- Inference costs jumped **20%+** from wasted tokens
+- Performance dropped on some models because agents got **too obedient** - following unnecessary instructions instead of solving the actual problem
 
-The fix isn't better prose. It's treating context like a budget.
+The fix isn't better writing. It's treating context like a budget - measure it, trim it, inject only what the current task needs.
 
 ```typescript
 import { loadRules, measure, lint, select } from "contextkit-ai";
 
 const rules = await loadRules("./");
-const report = measure(rules, 4000);
-const issues = lint(rules);
-const relevant = select(rules, { task: "fix auth bug", budget: 2000 });
-```
 
-Four functions. Load everything, see what it costs, find what's broken, keep what matters.
+measure(rules, 4000);       // what does your context cost?
+lint(rules);                 // conflicts? duplicates? dead weight?
+select(rules, {
+  task: "fix auth bug",      // only inject what matters
+  budget: 2000,              // stay within token budget
+});
+```
 
 ---
 
@@ -60,26 +64,75 @@ Four functions. Load everything, see what it costs, find what's broken, keep wha
 npm install contextkit-ai
 ```
 
-Or use the CLI directly:
+Run the CLI on any project to see what you're actually injecting:
+
+```bash
+npx contextkit measure
+```
+
+```
+contextkit measure - 6 rule file(s)
+
+  Total: 4,821 tokens
+
+  ############ 2,100 tokens (44%) - .cursor/rules/conventions.mdc
+  ######## 1,200 tokens (25%) - CLAUDE.md
+  ##### 890 tokens (18%) - .cursor/rules/api-patterns.mdc
+  ## 340 tokens (7%) - AGENTS.md
+  ## 180 tokens (4%) - .cursor/rules/testing.mdc
+  # 111 tokens (2%) - .github/copilot-instructions.md
+```
+
+Then lint it:
 
 ```bash
 npx contextkit lint
-npx contextkit measure
-npx contextkit measure --budget 4000
 ```
+
+```
+contextkit lint - 6 rule file(s)
+
+  [!] .cursor/rules/conventions.mdc
+      Rule is 2100 tokens. Consider splitting to keep each file under 2000 tokens.
+
+  [x] CLAUDE.md
+      Conflicts with AGENTS.md: "always use semicolons" vs "never use semicolons"
+
+  [!] CLAUDE.md
+      Duplicated line also found in .cursor/rules/conventions.mdc. Duplicates waste tokens.
+
+  [i] AGENTS.md
+      Contains vague instruction matching "follow best practices".
+      Specific instructions produce better results than general advice.
+
+  Score: 70/100 (FAILED)
+```
+
+That's the difference between guessing and knowing.
 
 ---
 
-## What It Does
+## What This Answers
 
-|             |                                                                                                                                                           |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Load**    | Auto-detects and parses rules from `.cursor/rules/`, `.cursorrules`, `CLAUDE.md`, `AGENTS.md`, `copilot-instructions.md`, `.windsurfrules`, `.clinerules` |
-| **Measure** | Estimates token cost per rule. Shows which files eat your budget                                                                                          |
-| **Lint**    | Finds conflicts between rules, duplicate content, bloated files, vague instructions, useless directory trees                                              |
-| **Select**  | Picks the right rules for a given task. Respects a token budget. Ranks by relevance                                                                       |
-| **Sync**    | Writes your `.cursor/rules/` as CLAUDE.md, AGENTS.md, or any target format                                                                                |
-| **Init**    | Scaffolds a starter rule file with tips from the research                                                                                                 |
+1. **How much context am I injecting?** Token count per file, percentage breakdown, budget check
+2. **Are my rules fighting each other?** Conflict detection across all files and formats
+3. **What's wasting tokens?** Directory listings, duplicate content, vague advice
+4. **Which rules matter for this task?** Task-relevant selection with token budget
+
+---
+
+## How It Works
+
+contextkit reads every context file format in the ecosystem, parses frontmatter, estimates token cost, and gives you tools to analyze and manage them.
+
+| | |
+|---|---|
+| `loadRules()` | Auto-detects `.cursor/rules/`, `.cursorrules`, `CLAUDE.md`, `AGENTS.md`, `copilot-instructions.md`, `.windsurfrules`, `.clinerules` |
+| `measure()` | Token cost per rule, percentage of total, budget check |
+| `lint()` | Conflicts, duplicates, bloat, vague instructions, useless directory trees. Scores 0-100 |
+| `select()` | Picks rules relevant to the current task. Respects a token budget. `alwaysApply` rules first, then by relevance |
+| `sync()` | Single source of truth. Write once in `.cursor/rules/`, sync to CLAUDE.md, AGENTS.md, and the rest |
+| `init()` | Starter template with tips from the research |
 
 ---
 
@@ -87,62 +140,50 @@ npx contextkit measure --budget 4000
 
 ### `loadRules(rootDir?)`
 
-Auto-detect and load all rule files from a project root.
-
 ```typescript
 const rules = await loadRules("./");
-// Finds .cursor/rules/*.mdc, CLAUDE.md, AGENTS.md, etc.
+// Finds every context file in the project
 
 const rules = await loadRules(".cursor/rules/");
-// Load from a specific directory
+// Or load from a specific directory
 ```
 
-Returns `RuleFile[]` with parsed frontmatter, body text, format type, and token count.
+Returns `RuleFile[]` with parsed frontmatter, body, format, path, and token count.
 
 ### `measure(rules, budget?)`
-
-See what your context costs.
 
 ```typescript
 const report = measure(rules, 4000);
 
-console.log(report.totalTokens); // 3847
-console.log(report.overBudget); // false
-
-for (const rule of report.rules) {
-  console.log(`${rule.path}: ${rule.tokens} tokens (${rule.percentage}%)`);
-}
+report.totalTokens;   // 3847
+report.overBudget;    // false
+report.rules;         // sorted by size, each with tokens + percentage
 ```
 
 ### `lint(rules)`
 
-Find problems before your agent does.
-
 ```typescript
 const report = lint(rules);
 
-console.log(report.score); // 85/100
-console.log(report.passed); // true (no errors, some warnings)
-
-for (const issue of report.issues) {
-  console.log(`[${issue.severity}] ${issue.path}: ${issue.message}`);
-}
+report.score;    // 85/100
+report.passed;   // true (no errors, warnings don't fail)
+report.issues;   // array of { rule, path, severity, message }
 ```
 
-Checks for:
+What the linter catches:
 
-| Rule                | What it catches                                         |
-| ------------------- | ------------------------------------------------------- |
-| `token-budget`      | Files over 2000 tokens (warning) or 5000 tokens (error) |
-| `empty-rule`        | Files too short to be useful                            |
-| `duplicate-content` | Same instruction in multiple files                      |
-| `conflict`          | "always use X" in one file, "never use X" in another    |
-| `directory-listing` | Large directory trees that waste tokens without helping |
-| `vague-instruction` | "follow best practices" and similar non-instructions    |
+| Rule | Severity | What it finds |
+|---|---|---|
+| `token-budget` | warning/error | Files over 2,000 tokens (warning) or 5,000 (error) |
+| `empty-rule` | warning | Files too short to do anything |
+| `duplicate-content` | warning | Same instruction repeated across files |
+| `conflict` | error | "always use X" in one file, "never use X" in another |
+| `directory-listing` | warning | 10+ line directory trees that agents don't need |
+| `vague-instruction` | info | "follow best practices", "write clean code", "be consistent" |
 
 ### `select(rules, options)`
 
-Pick the rules that matter for the current task.
+The core insight from the research: don't inject everything. Pick what matters.
 
 ```typescript
 const relevant = select(rules, {
@@ -153,83 +194,56 @@ const relevant = select(rules, {
 });
 ```
 
-Rules with `alwaysApply: true` in frontmatter are prioritized. Path matches and content matches boost relevance. Token budget is respected - high-relevance rules are included first.
+Scoring: `alwaysApply: true` in frontmatter gets highest priority. Then task words matched against file paths and content. Then tag matches. Budget is respected - highest-scored rules are included first until the budget runs out.
 
 ### `sync(options)`
 
-Keep all your context files in sync from a single source.
+Write rules once, sync everywhere.
 
 ```typescript
-const results = await sync({
+await sync({
   source: ".cursor/rules/",
-  targets: ["CLAUDE.md", "AGENTS.md"],
-  dryRun: true,
+  targets: ["CLAUDE.md", "AGENTS.md", ".github/copilot-instructions.md"],
 });
-
-for (const result of results) {
-  console.log(
-    `${result.target}: ${result.changes ? "would update" : "up to date"}`,
-  );
-}
 ```
+
+Supports `dryRun: true` to preview changes without writing.
 
 ### `init(options?)`
 
-Create a starter rule file.
-
 ```typescript
 await init({ format: "cursor-rules" });
-// Creates .cursor/rules/conventions.mdc
+// Creates .cursor/rules/conventions.mdc with research-backed starter template
 ```
 
 ---
 
 ## CLI
 
-### `contextkit lint`
-
 ```bash
-npx contextkit lint
-npx contextkit lint --path ./my-project
-npx contextkit lint --json
-```
-
-Exits with code 1 if errors are found. Warnings don't fail.
-
-### `contextkit measure`
-
-```bash
-npx contextkit measure
-npx contextkit measure --budget 4000
-npx contextkit measure --json
-```
-
-### `contextkit sync`
-
-```bash
+npx contextkit lint                    # find issues
+npx contextkit lint --json             # machine-readable output
+npx contextkit measure                 # token cost breakdown
+npx contextkit measure --budget 4000   # check against budget
 npx contextkit sync --source .cursor/rules/ --target CLAUDE.md,AGENTS.md
-npx contextkit sync --source .cursor/rules/ --target CLAUDE.md --dry-run
-```
-
-### `contextkit init`
-
-```bash
-npx contextkit init
+npx contextkit init                    # scaffold starter rules
 npx contextkit init --format claude-md
-npx contextkit init --format agents-md
 ```
+
+All commands support `--path <dir>` to point at a different project root. `lint` exits with code 1 on errors (warnings pass).
 
 ---
 
 ## Use with Vercel AI SDK / LangChain / Custom Agents
 
-contextkit is not tied to any IDE. Use it anywhere you build agents:
+This isn't just for Cursor. If you're building agents with Vercel AI SDK, LangChain, or your own framework, contextkit solves the same problem: how much context are you stuffing into the system prompt, and is it helping or hurting?
 
 ```typescript
 import { loadRules, select } from "contextkit-ai";
 import { generateText } from "ai";
 
 const allRules = await loadRules("./rules");
+
 const relevant = select(allRules, {
   task: userMessage,
   budget: 3000,
@@ -244,25 +258,50 @@ const { text } = await generateText({
 });
 ```
 
-Works with any framework that accepts a system prompt string.
+Any framework that takes a system prompt string. Any rules stored as markdown files.
 
 ---
 
 ## Supported Formats
 
-| Format          | Path                              | Tool                 |
-| --------------- | --------------------------------- | -------------------- |
-| Cursor (modern) | `.cursor/rules/*.mdc`             | Cursor IDE           |
-| Cursor (legacy) | `.cursorrules`                    | Cursor IDE           |
-| Claude Code     | `CLAUDE.md`                       | Claude Code          |
-| AGENTS.md       | `AGENTS.md`                       | Multi-agent standard |
-| GitHub Copilot  | `.github/copilot-instructions.md` | GitHub Copilot       |
-| Windsurf        | `.windsurfrules`                  | Windsurf             |
-| Cline           | `.clinerules`                     | Cline                |
+| Format | File | Used by |
+|---|---|---|
+| Cursor (modern) | `.cursor/rules/*.mdc` | Cursor IDE |
+| Cursor (legacy) | `.cursorrules` | Cursor IDE |
+| Claude Code | `CLAUDE.md` | Claude Code |
+| AGENTS.md | `AGENTS.md` | Cross-agent standard |
+| GitHub Copilot | `.github/copilot-instructions.md` | GitHub Copilot |
+| Windsurf | `.windsurfrules` | Windsurf |
+| Cline | `.clinerules` | Cline |
+
+contextkit detects the format from the file path. No configuration needed.
 
 ---
 
-**Stack:** TypeScript (strict) · Vitest · tsup (ESM + CJS) · zero dependencies
+<details>
+<summary><strong>Why not just write better rules?</strong></summary>
+
+The ETH Zurich study tested both human-written and LLM-generated context files. Human-written ones were better, but only by 4%. The real problem isn't quality - it's volume. More context means more tokens consumed by instructions the agent doesn't need for the current task. The winning strategy is fewer, task-relevant rules, not better prose.
+
+</details>
+
+<details>
+<summary><strong>How accurate is the token estimation?</strong></summary>
+
+contextkit uses a 4-character-per-token approximation. This is intentionally simple and fast. It's accurate enough for budgeting and comparison (GPT-4 averages ~4 chars/token for English text). If you need exact counts, pipe the output through tiktoken or your model's tokenizer.
+
+</details>
+
+<details>
+<summary><strong>Does this work in CI?</strong></summary>
+
+Yes. `npx contextkit lint` returns exit code 1 on errors, 0 on pass. Add it to your CI pipeline the same way you'd add eslint. The `--json` flag gives machine-readable output for custom reporting.
+
+</details>
+
+---
+
+**Stack:** TypeScript (strict) · Vitest · tsup (ESM + CJS) · zero runtime dependencies
 
 ---
 
