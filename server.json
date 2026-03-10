@@ -1,0 +1,20 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.ofershap/ai-context-kit",
+  "description": "Lint, measure, and sync AI context files across Cursor, Claude Code, Copilot.",
+  "repository": {
+    "url": "https://github.com/ofershap/ai-context-kit",
+    "source": "github"
+  },
+  "version": "0.1.2",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "ai-context-kit",
+      "version": "0.1.2",
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ]
+}
